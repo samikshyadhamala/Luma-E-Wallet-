@@ -15,7 +15,8 @@ db.sqlite3
 note.txt
 media/
 staticfiles/
-requirements.txt
+requirement.txt
+README.md
 
 # Environment and secrets
 .env
