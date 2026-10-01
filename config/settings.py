@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,13 +24,28 @@ load_dotenv(BASE_DIR / ".env")
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-!iau03slcxt@^tsf%2+-*plbaxhw08dmj!ba^+&5f-hrlginyx'
+# Keep secrets in the environment, never in source control.
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "")
+DEBUG = os.getenv("DJANGO_DEBUG", "False").lower() == "true"
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+if not SECRET_KEY:
+    raise ImproperlyConfigured("Set DJANGO_SECRET_KEY in the environment or .env file.")
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", "testserver"]
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost,testserver").split(",")
+    if host.strip()
+]
+if os.getenv("VERCEL_URL"):
+    ALLOWED_HOSTS.append(os.environ["VERCEL_URL"])
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+if os.getenv("VERCEL_URL"):
+    CSRF_TRUSTED_ORIGINS.append(f"https://{os.environ['VERCEL_URL']}")
 
 
 # Application definition
