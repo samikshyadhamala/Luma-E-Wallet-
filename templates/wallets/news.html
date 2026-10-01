@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}News · Luma{% endblock %}
+{% block content %}
+<div class="page news-page">
+  <div class="page-heading"><div><div class="kicker">Business headlines</div><h1>News that moves money.</h1><p>Recent business and economic stories, collected from BBC Business.</p></div></div>
+  <section class="news-section" aria-labelledby="news-heading" data-feed-url="{% url 'wallets:news_feed' %}">
+    <div class="section-head"><div><span class="kicker">BBC Business</span><h2 id="news-heading">Technology & finance first</h2><p class="chart-caption">Prioritized technology and finance. Updates every 5 minutes.</p></div><span class="news-updated" id="news-updated" aria-live="polite">Loading headlines…</span></div>
+    <div class="news-grid" id="news-items" aria-live="polite"><div class="data-card news-empty">Fetching latest headlines…</div></div>
+  </section>
+</div>
+<script>
+(() => {
+  const section = document.querySelector('.news-section');
+  const list = document.getElementById('news-items');
+  const updated = document.getElementById('news-updated');
+  const refresh = async () => {
+    try {
+      const response = await fetch(section.dataset.feedUrl, {headers: {'Accept': 'application/json'}});
+      if (!response.ok) throw new Error('Feed unavailable');
+      const feed = await response.json();
+      list.replaceChildren();
+      if (!feed.items.length) {
+        const empty = document.createElement('div');
+        empty.className = 'news-empty';
+        empty.textContent = 'Headlines are temporarily unavailable. Please check back shortly.';
+        list.append(empty);
+      }
+      feed.items.forEach((item, index) => {
+        const card = document.createElement('article');
+        card.className = 'news-card';
+        const meta = document.createElement('div');
+        meta.className = 'news-card-meta';
+        const source = document.createElement('span');
+        source.className = 'news-source';
+        source.textContent = item.category || 'Business';
+        const time = document.createElement('time');
+        time.className = 'news-date';
+        const published = new Date(item.published);
+        if (!Number.isNaN(published.getTime())) {
+          time.dateTime = published.toISOString();
+          time.title = published.toLocaleString();
+          const minutes = Math.max(0, Math.floor((Date.now() - published.getTime()) / 60000));
+          time.textContent = minutes < 1 ? 'Just now' : minutes < 60 ? `${minutes}m ago` : minutes < 1440 ? `${Math.floor(minutes / 60)}h ago` : `${Math.floor(minutes / 1440)}d ago`;
+        } else {
+          time.textContent = item.published || 'Recently';
+        }
+        meta.append(source, time);
+        const title = document.createElement('a');
+        title.className = 'news-title';
+        title.href = item.link;
+        title.target = '_blank';
+        title.rel = 'noopener noreferrer';
+        title.textContent = item.title;
+        const summary = document.createElement('p');
+        summary.className = 'news-summary';
+        summary.textContent = item.description || 'Read the latest coverage from BBC Business.';
+        const footer = document.createElement('div');
+        footer.className = 'news-card-footer';
+        const publisher = document.createElement('span');
+        publisher.className = 'news-publisher';
+        publisher.textContent = 'bbc.com/news/business';
+        const read = document.createElement('a');
+        read.className = 'news-read-link';
+        read.href = item.link;
+        read.target = '_blank';
+        read.rel = 'noopener noreferrer';
+        read.textContent = 'Read full story ↗';
+        footer.append(publisher, read);
+        card.append(meta, title, summary, footer);
+        list.append(card);
+      });
+      const when = feed.updated_at ? new Date(feed.updated_at).toLocaleTimeString([], {hour: 'numeric', minute: '2-digit'}) : '';
+      updated.textContent = feed.stale ? 'Showing saved headlines' : when ? `Updated ${when}` : 'Waiting for feed';
+    } catch (error) {
+      updated.textContent = 'Could not refresh headlines';
+      if (!list.childElementCount) list.textContent = 'Headlines are temporarily unavailable.';
+    }
+  };
+  refresh();
+  window.setInterval(refresh, 5 * 60 * 1000);
+})();
+</script>
+{% endblock %}

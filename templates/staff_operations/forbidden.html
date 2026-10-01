@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Access denied · Luma{% endblock %}
+{% block content %}
+<div class="page access-denied-page">
+  <section class="data-card access-denied-card" role="alert" aria-labelledby="access-denied-title">
+    <div class="access-denied-icon" aria-hidden="true">!</div>
+    <div class="kicker">403 · Restricted area</div>
+    <h1 id="access-denied-title">You don’t have access to the operations console.</h1>
+    <p>This area is for authorized staff accounts. If you think you should have access, contact your administrator.</p>
+    <a class="primary-btn" href="{% url 'wallets:dashboard' %}">Back to your wallet</a>
+  </section>
+</div>
+{% endblock %}

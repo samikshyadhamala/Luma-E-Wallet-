@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Personal finance · Luma{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-heading">
+    <div><div class="kicker">Personal finance manager</div><h1>Plan with purpose</h1><p>Track monthly spending, budgets, and the goals you care about.</p></div>
+    <form method="get" class="inline-form"><label for="month">Month</label><input id="month" type="month" name="month" value="{{ month_value }}"><button class="secondary-btn" type="submit">View</button></form>
+  </div>
+
+  <section class="metric-grid finance-metrics">
+    <div class="metric-card"><span class="metric-label">Spent this month</span><strong>{{ total_spent|floatformat:2 }}</strong><small>Your outgoing wallet activity</small></div>
+    <div class="metric-card"><span class="metric-label">Active budgets</span><strong>{{ budgets|length }}</strong><small>For {{ month|date:'F Y' }}</small></div>
+    <div class="metric-card metric-dark"><span class="metric-label">Goals</span><strong>{{ goals|length }}</strong><small>Keep your progress visible</small></div>
+  </section>
+
+  <section class="chart-section"><div class="section-head"><div><span class="kicker">Spending patterns</span><h2>When your money moves</h2><p class="chart-caption">Successful outgoing transactions in {{ month|date:'F Y' }} and the previous five months.</p></div></div><div class="chart-grid"><div class="data-card chart-card"><h3>Monthly trend</h3><div class="bar-chart monthly-chart">{% for item in monthly_chart %}<div class="bar-column"><span class="bar-value">{{ item.total|floatformat:0 }}</span><div class="bar-track"><span style="height:{% widthratio item.total chart_max 100 %}%"></span></div><small>{{ item.label }}</small></div>{% endfor %}</div></div><div class="data-card chart-card"><h3>Daily spending · {{ month|date:'M' }}</h3><div class="bar-chart daily-chart">{% for item in daily_chart %}<div class="bar-column"><div class="bar-track"><span style="height:{% widthratio item.total chart_max 100 %}%"></span></div><small>{% if item.label == 1 or item.label|divisibleby:5 %}{{ item.label }}{% endif %}</small></div>{% endfor %}</div></div></div></section>
+
+  <div class="finance-grid">
+    <section>
+      <div class="section-head"><div><span class="kicker">Monthly plan</span><h2>Budgets</h2></div></div>
+      <div class="data-card finance-list">
+        {% for budget in budgets %}
+        <div class="finance-row"><div class="finance-row-main"><strong>{{ budget.category.name }}</strong><small>{{ budget.spent|floatformat:2 }} / {{ budget.amount|floatformat:2 }} {{ user.wallet.currency }} · {% if budget.is_over %}Over budget{% elif budget.is_near_limit %}Almost full{% else %}On track{% endif %}</small><div class="progress {% if budget.is_near_limit %}progress-warning{% endif %}"><span style="width:{{ budget.percent }}%"></span></div></div><span class="finance-number {% if budget.is_near_limit %}finance-warning{% endif %}">{% if budget.is_over %}{{ budget.spent|floatformat:2 }} spent{% else %}{{ budget.remaining|floatformat:2 }} left{% endif %}</span></div>
+        {% empty %}<div class="empty">No budgets for this month yet.</div>{% endfor %}
+      </div>
+    </section>
+    <section>
+      <div class="section-head"><div><span class="kicker">Spending patterns</span><h2>Insights</h2></div></div>
+      <div class="data-card finance-list">
+        {% for item in category_totals %}<div class="finance-row"><div class="finance-row-main"><strong>{{ item.category__name|default:'Uncategorized' }}</strong><small>Outgoing transactions</small></div><span class="finance-number">{{ item.total|floatformat:2 }}</span></div>{% empty %}<div class="empty">Add transactions to see patterns.</div>{% endfor %}
+      </div>
+    </section>
+  </div>
+
+  <div class="finance-grid finance-lower">
+    <section><div class="section-head"><div><span class="kicker">Set a limit</span><h2>New budget</h2></div></div><div class="form-card"><form method="post">{% csrf_token %}<input type="hidden" name="form_type" value="budget">{{ budget_form.non_field_errors }}{% for field in budget_form %}<div class="field">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}<button class="primary-btn" type="submit">Save budget</button></form></div></section>
+    <section><div class="section-head"><div><span class="kicker">Longer horizon</span><h2>Budget goals</h2></div></div><div class="data-card finance-list goals-list">{% for goal in goals %}<div class="finance-row"><div class="finance-row-main"><strong>{{ goal.name }}</strong><small>{{ goal.saved_amount|floatformat:2 }} / {{ goal.target_amount|floatformat:2 }}{% if goal.target_date %} · due {{ goal.target_date|date:'M Y' }}{% endif %} · {% if goal.is_completed %}Completed{% else %}In progress{% endif %}</small><div class="progress"><span style="width:{{ goal.progress_percent }}%"></span></div><form method="post" class="goal-save-form">{% csrf_token %}<input type="hidden" name="form_type" value="savings"><input type="hidden" name="goal_id" value="{{ goal.pk }}"><input type="number" name="amount" min="0.01" step="0.01" placeholder="Add savings" required><button class="secondary-btn" type="submit" {% if goal.is_completed %}disabled{% endif %}>Save money</button></form></div><span class="finance-number">{{ goal.progress_percent }}%</span></div>{% empty %}<div class="empty">No goals yet.</div>{% endfor %}</div><div class="form-card goal-form"><form method="post">{% csrf_token %}<input type="hidden" name="form_type" value="goal">{{ goal_form.non_field_errors }}{% for field in goal_form %}<div class="field">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}<button class="primary-btn" type="submit">Create goal</button></form></div></section>
+  </div>
+</div>
+{% endblock %}

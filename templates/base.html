@@ -1,0 +1,44 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Luma Wallet{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+  {% if user.is_authenticated %}
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="{% url 'wallets:dashboard' %}"><span class="brand-mark">L</span><span>Luma<span class="brand-muted">/wallet</span></span></a>
+      <div class="side-label">Workspace</div>
+      <nav class="nav-list">
+        <a href="{% url 'wallets:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"><span>◈</span> Overview</a>
+        <a href="{% url 'wallets:news' %}" class="nav-link {% if request.resolver_match.url_name == 'news' %}active{% endif %}"><span>▤</span> News</a>
+        <a href="{% url 'transactions:history' %}" class="nav-link {% if request.resolver_match.url_name == 'history' %}active{% endif %}"><span>≡</span> Activity</a>
+        <a href="{% url 'transactions:finance' %}" class="nav-link {% if request.resolver_match.url_name == 'finance' %}active{% endif %}"><span>◒</span> Finance</a>
+        <a href="{% url 'transactions:statement_export' %}" class="nav-link"><span>↓</span> Statement</a>
+        <a href="{% url 'transactions:refunds' %}" class="nav-link {% if request.resolver_match.url_name == 'refunds' %}active{% endif %}"><span>↩</span> Refunds</a>
+        <a href="{% url 'users:kyc' %}" class="nav-link {% if request.resolver_match.url_name == 'kyc' %}active{% endif %}"><span>✓</span> Verification</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="mini-status"><span class="status-dot"></span><span><strong>{{ user.username }}</strong><small>{% if user.is_staff or user.is_superuser %}Staff account{% else %}Personal account{% endif %}</small></span></div>
+        <a href="{% url 'users:profile' %}" class="nav-link"><span>⚙</span> Settings</a>
+        <form method="post" action="{% url 'users:logout' %}" onsubmit="return confirm('Are you sure you want to log out?');">{% csrf_token %}<button class="nav-link nav-button" type="submit"><span>↪</span> Sign out</button></form>
+      </div>
+    </aside>
+    <main class="main-content">
+      <header class="topbar"><div class="mobile-brand">Luma / wallet</div><div class="topbar-right"><span class="live-pill"><span></span> System live</span><div class="avatar">{{ user.username|first|upper }}</div></div></header>
+      {% if messages %}<div class="toast-stack">{% for message in messages %}<div class="toast {{ message.tags }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  {% else %}
+    {% block public_content %}{% endblock %}
+  {% endif %}
+</body>
+</html>
